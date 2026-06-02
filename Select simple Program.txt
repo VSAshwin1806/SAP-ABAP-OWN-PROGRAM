@@ -1,0 +1,83 @@
+*&---------------------------------------------------------------------*
+*& Report  ZPRG_SELECT_STATEMENTS
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT ZPRG_SELECT_STATEMENTS.
+
+" This report Mainly for using select to fetch the data and display the final proccessed data.
+
+
+
+TABLES: EKKO.
+
+"Declared parameter for user gives input to get the data.
+PARAMETERS: P_ebeln TYPE ekko-ebeln.
+
+
+
+"Declared a structure it have collection of fields.
+TYPES: BEGIN OF ty_po_data,
+     ebeln TYPE ekko-ebeln,
+     bukrs TYPE ekko-bukrs,
+     bsart TYPE ekko-bsart,
+     aedat TYPE ekko-aedat,
+     ernam TYPE ekko-ernam,
+     lifnr TYPE ekko-lifnr,
+     ekorg TYPE ekko-ekorg,
+     ekgrp TYPE ekko-ekgrp,
+  END OF ty_po_data.
+
+
+  "Declared a Internal Table to store multiple data at the run time.
+  DATA : lt_po_data TYPE STANDARD TABLE OF ty_po_data.
+
+
+
+
+    " Why I use if else it mean's when user gives input in the parameter it will give the data for that value only
+    IF p_ebeln IS NOT INITIAL.
+    "Using select quary to select the field from the strucuture.
+    SELECT
+      ebeln
+      bukrs
+      bsart
+      aedat
+      ernam
+      lifnr
+      ekorg
+      ekgrp
+      FROM ekko INTO TABLE lt_po_data "selected the field from the ekko table and store to the Interbal table (lt_po_data).
+      WHERE ebeln = P_ebeln. "Using Where condtion the ekko ebeln and the parameter (User Input given)value to filter the data.
+
+" In this Else part when the user not give input value but they run the program it will show all data's because this else part not use where condtion.
+ELSE.
+  SELECT
+      ebeln
+      bukrs
+      bsart
+      aedat
+      ernam
+      lifnr
+      ekorg
+      ekgrp
+      FROM ekko INTO TABLE lt_po_data.
+  ENDIF.
+
+
+    cl_salv_table=>factory( "CL_SALV_TABLE class oda FACTORY method ah call pannuthu. Intha method ALV object create panna use agum.
+*      EXPORTING
+*        list_display   = IF_SALV_C_BOOL_SAP=>FALSE    " ALV Displayed in List Mode
+*        r_container    =     " Abstract Container for GUI Controls
+*        container_name =
+      IMPORTING
+        r_salv_table   = DATA(lo_salv_table)    " Basis Class Simple ALV Tables
+      CHANGING
+        t_table        = lt_po_data "giving the Internal Table because it have filter or proccessed data.
+    ).
+*      CATCH cx_salv_msg.    "
+
+      lo_salv_table->display( ).
