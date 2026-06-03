@@ -1,0 +1,85 @@
+*&---------------------------------------------------------------------*
+*& Report  ZPRG_SELECT_UPTO_1_ROW
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT ZPRG_SELECT_UPTO_1_ROW.
+
+" Using Select UPTO 1 ROW or Select UPTO 10 ROW it means how many record we have want in the display to use this
+" For Ex: we want only (1) record mean's we use UPTO 1 ROWS OR
+"         we want 10 record mean's we use UPTO 10 ROWS
+" It Based On Client requirement
+
+
+
+
+" This report Mainly for using select to fetch the data and display the final proccessed data.
+TABLES: vbak.
+
+
+"Declared select-option for range value user gives input 1 to 10 record or value it will get 1 to 10 datas.
+select-OPTIONS: s_vbeln for vbak-vbeln.
+
+
+
+"Declared a structure it have collection of fields.
+TYPES: BEGIN OF ty_sale,
+       vbeln TYPE vbak-vbeln,
+       erdat TYPE vbak-erdat,
+       ernam TYPE vbak-ernam,
+       audat TYPE vbak-audat,
+       auart TYPE vbak-auart,
+       netwr TYPE vbak-netwr,
+       waerk TYPE vbak-waerk,
+       vkorg TYPE vbak-vkorg,
+  END OF ty_sale.
+
+
+      "Declared a Internal Table to store multiple data at the run time.
+  DATA: lt_sale TYPE STANDARD TABLE OF ty_sale.
+
+IF s_vbeln IS NOT INITIAL.
+  SELECT
+       vbeln
+       erdat
+       ernam
+       audat
+       auart
+       netwr
+       waerk
+       vkorg
+FROM vbak INTO  TABLE lt_sale  UP TO 10 ROWS " up to 1 or 10 row i want only one record or i want 10 record only.
+WHERE vbeln IN S_vbeln.
+ELSE.
+  SELECT
+       vbeln
+       erdat
+       ernam
+       audat
+       auart
+       netwr
+       waerk
+       vkorg
+FROM vbak INTO  TABLE lt_sale.
+  ENDIF.
+
+
+
+    cl_salv_table=>factory(
+*      EXPORTING
+*        list_display   = IF_SALV_C_BOOL_SAP=>FALSE    " ALV Displayed in List Mode
+*        r_container    =     " Abstract Container for GUI Controls
+*        container_name =
+      IMPORTING
+      r_salv_table   = DATA(lo_salv_table)    " Basis Class Simple ALV Tables
+      CHANGING
+        t_table        = lt_sale
+    ).
+*      CATCH cx_salv_msg.    "
+
+
+
+    lo_salv_table->display( ).
