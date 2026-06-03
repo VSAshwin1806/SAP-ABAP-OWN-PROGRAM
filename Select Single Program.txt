@@ -1,0 +1,97 @@
+*&---------------------------------------------------------------------*
+*& Report  ZPRG_SELECT_SINGLE
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT zprg_select_single.
+
+" Declared a Sales Order Header Table - Used to access VBAK fields in the report using (TABLES)-> it's a keyword it .
+TABLES: vbak.
+
+" Declared parameter for user give input to get data (vbeln) is the key field
+PARAMETERS : p_vbeln TYPE vbak-vbeln.
+
+
+" Declared a Structure from the vbak table.
+TYPES : BEGIN OF ty_sales,
+     vbeln TYPE vbak-vbeln,
+     erdat TYPE vbak-erdat,
+     ernam TYPE vbak-ernam,
+     audat TYPE vbak-audat,
+     auart TYPE vbak-auart,
+     netwr TYPE vbak-netwr,
+     waerk TYPE vbak-waerk,
+     vkorg TYPE vbak-vkorg,
+ END OF ty_sales.
+
+
+" Declared a Internal Table to store multiple record or data at run time.
+DATA : lt_sales TYPE STANDARD TABLE OF ty_sales. " lt -> stands for INTERNAL TABLE.
+
+
+" Declared a Work area to store or hold only (one) record.
+DATA: ls_sales TYPE ty_sales. " ls-> stands for WORK AREA.
+
+
+"NOTE: Using SELECT SINGLE Statement we have use work area because select single it mean's it fetch only one record from the vbak table so we use work area
+"       to the single record
+
+
+
+IF p_vbeln IS NOT INITIAL.
+" Using SELECT SINGLE statement from the structure.
+SELECT SINGLE
+  vbeln
+  erdat
+  ernam
+  audat
+  auart
+  netwr
+  waerk
+  vkorg
+FROM vbak INTO ls_sales " selected the field from the vbak table and store to the work area of ls_sales.
+WHERE vbeln = p_vbeln.
+
+  ELSE.
+
+
+" IMPORTANT NOTE: WHERE condition kudutha, andha value-ku match aana exact record varum.
+" WHERE kudukkama SELECT SINGLE use pannina, table-la irundhu oru record varum. Aana adhu first record-nu guarantee illa;
+"database endha record-a venumnaalum return panna chance irukku.
+SELECT SINGLE
+  vbeln
+  erdat
+  ernam
+  audat
+  auart
+  netwr
+  waerk
+  vkorg
+FROM vbak INTO ls_sales.
+ENDIF.
+
+
+IF sy-subrc = 0.
+
+  APPEND ls_sales TO lt_sales.
+
+  ENDIF.
+
+   cl_salv_table=>factory(
+*     EXPORTING
+*       list_display   = IF_SALV_C_BOOL_SAP=>FALSE    " ALV Displayed in List Mode
+*       r_container    =     " Abstract Container for GUI Controls
+*       container_name =
+     IMPORTING
+       r_salv_table   =   DATA(lo_salv_table)  " Basis Class Simple ALV Tables
+     CHANGING
+       t_table        = lt_sales
+   ).
+*     CATCH cx_salv_msg.    "
+
+
+
+lo_salv_table->display( ).
