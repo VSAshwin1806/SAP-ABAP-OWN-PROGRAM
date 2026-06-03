@@ -1,0 +1,45 @@
+*&---------------------------------------------------------------------*
+*& Report  ZPRG_SELECT_STAR
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT ZPRG_SELECT_STAR.
+
+" Declared a Parameter for user to give value.
+PARAMETERS: p_vbeln TYPE vbak-vbeln.
+
+" Declared a INTERNAL TABLE (lt_sales) usimg vbak table because we not declared a structure so we use a sap standard table.
+DATA : lt_sales TYPE STANDARD TABLE OF vbak.
+
+IF p_vbeln IS NOT INITIAL.
+" Using (Select *) Statement it mean's it select all field's from the vbak table.
+SELECT *
+  FROM vbak
+INTO TABLE lt_sales " The select field's data it store the internal table.
+WHERE vbeln = p_vbeln.
+
+  ELSE.
+SELECT *
+  FROM vbak
+INTO TABLE lt_sales.
+  ENDIF.
+
+
+
+" called a Funtional Module to display the value using the internal table to put ----->|
+  cl_salv_table=>factory(                                                          "   |
+*    EXPORTING                                                                         |
+*      list_display   = IF_SALV_C_BOOL_SAP=>FALSE    " ALV Displayed in List Mode      |
+*      r_container    =     " Abstract Container for GUI Controls                      |
+*      container_name =                                                                |
+    IMPORTING                                                                      "   |
+      r_salv_table   =  DATA(lo_salv_table)   " Basis Class Simple ALV Tables          |
+    CHANGING                                                                       "   |
+      t_table        = lt_sales " Here<------------------------------------------------|
+  ).
+*    CATCH cx_salv_msg.    "
+
+  lo_salv_table->display( ).
