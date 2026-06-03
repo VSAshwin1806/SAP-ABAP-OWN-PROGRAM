@@ -43,6 +43,7 @@ DATA: ls_sales TYPE ty_sales. " ls-> stands for WORK AREA.
 
 IF p_vbeln IS NOT INITIAL.
 " Using SELECT SINGLE statement from the structure.
+  " NOTE: Using SINGLE Statement it get only one record.
 SELECT SINGLE
   vbeln
   erdat
@@ -61,7 +62,7 @@ WHERE vbeln = p_vbeln.
 " IMPORTANT NOTE: WHERE condition kudutha, andha value-ku match aana exact record varum.
 " WHERE kudukkama SELECT SINGLE use pannina, table-la irundhu oru record varum. Aana adhu first record-nu guarantee illa;
 "database endha record-a venumnaalum return panna chance irukku.
-SELECT SINGLE
+SELECT
   vbeln
   erdat
   ernam
@@ -70,10 +71,12 @@ SELECT SINGLE
   netwr
   waerk
   vkorg
-FROM vbak INTO ls_sales.
+FROM vbak  INTO TABLE lt_sales.
 ENDIF.
 
-
+" Using If conditon when the user give input in the parameter it will run the select single query block but that block code have work area we can't display that work area
+" so we append the work area value to the Internal table (lt_sales) now we can display the value (Note: only the user given the input in the parameter)
+" the user not given the value in the parameter it will run the else part.
 IF sy-subrc = 0.
 
   APPEND ls_sales TO lt_sales.
