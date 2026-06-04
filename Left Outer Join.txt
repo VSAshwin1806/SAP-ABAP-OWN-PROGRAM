@@ -1,0 +1,73 @@
+*&---------------------------------------------------------------------*
+*& Report  ZPRG_LEFT_OUTER_JOIN
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT zprg_left_outer_join.
+
+
+" Declared a parameter for user to give input to data
+PARAMETERS: p_ebeln TYPE ekko-ebeln.
+
+
+
+TYPES: BEGIN OF ty_purch,
+ebeln TYPE ekko-ebeln,
+bukrs TYPE ekko-bukrs,
+bstyp TYPE ekko-bstyp,
+bsart TYPE ekko-bsart,
+aedat TYPE ekko-aedat,
+ernam TYPE ekko-ernam,
+lifnr TYPE ekko-lifnr,
+ebelp TYPE ekpo-ebelp,
+matnr TYPE ekpo-matnr,
+menge TYPE ekpo-menge,
+meins TYPE ekpo-meins,
+END OF ty_purch.
+
+
+DATA : lt_purch TYPE STANDARD TABLE OF ty_purch.
+
+
+SELECT
+  a~ebeln
+  a~bukrs
+  a~bstyp
+  a~bsart
+  a~aedat
+  a~ernam
+  a~lifnr
+  b~ebelp
+  b~matnr
+  b~menge
+  b~meins
+  FROM ekko AS a LEFT OUTER JOIN ekpo As b ON " LEFT OUTER JOIN mean it fetch the data from left data of ekko full fields and right table ekpo common field data will come
+  a~ebeln = b~ebeln
+  INTO TABLE lt_purch
+  WHERE a~ebeln = p_ebeln.
+
+
+
+  cl_salv_table=>factory(
+*    EXPORTING
+*      list_display   = IF_SALV_C_BOOL_SAP=>FALSE    " ALV Displayed in List Mode
+*      r_container    =     " Abstract Container for GUI Controls
+*      container_name =
+    IMPORTING
+      r_salv_table   =  DATA(lo_salv_table)   " Basis Class Simple ALV Tables
+    CHANGING
+      t_table        = lt_purch
+  ).
+*    CATCH cx_salv_msg.    "
+
+
+
+  DATA(lo_columns) = lo_salv_table->get_columns( ).
+
+  lo_columns->set_optimize( abap_true ).
+
+
+  lo_salv_table->display( ).
