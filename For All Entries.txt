@@ -1,0 +1,73 @@
+*&---------------------------------------------------------------------*
+*& Report  Z_FOR_ALL_ENTRIES
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT z_for_all_entries.
+
+
+" Declared a Pameter for user to give input and get the data
+PARAMETERS: p_vbeln TYPE vbak-vbeln.
+
+
+*
+*TYPES: BEGIN OF ty_sales_data1,
+*      vbeln TYPE vbak-vbeln,
+*     END OF ty_sales_data1.
+
+
+TYPES: BEGIN OF ty_sales_data,
+       vbeln TYPE vbak-vbeln,
+       matnr TYPE vbap-matnr,
+       erdat TYPE vbap-erdat,
+       ernam TYPE vbap-ernam,
+       posnr TYPE vbap-posnr,
+       netwr TYPE vbap-netwr,
+  END OF ty_sales_data.
+
+
+DATA : lt_sales_data1 TYPE STANDARD TABLE OF ty_sales_data,
+       lt_sales_data2 TYPE STANDARD TABLE OF ty_sales_data.
+
+
+ AT SELECTION-SCREEN ON p_vbeln.
+
+  IF p_vbeln is INITIAL.
+    MESSAGE 'Please enter Sales Order number' TYPE 'E'.
+  ENDIF.
+
+SELECT
+  vbeln
+FROM vbak INTO TABLE lt_sales_data1 WHERE vbeln = P_vbeln.
+
+
+IF lt_sales_data1 IS NOT INITIAL.
+SELECT
+  vbeln
+  matnr
+  erdat
+  ernam
+  posnr
+  netwr
+  FROM vbap INTO TABLE lt_sales_data2
+  FOR ALL ENTRIES IN lt_sales_data1
+  WHERE vbeln = lt_sales_data1-vbeln.
+ENDIF.
+
+cl_salv_table=>factory(
+*        EXPORTING
+*          list_display   = IF_SALV_C_BOOL_SAP=>FALSE    " ALV Displayed in List Mode
+*          r_container    =     " Abstract Container for GUI Controls
+*          container_name =
+  IMPORTING
+    r_salv_table   =  DATA(lo_salv_table)   " Basis Class Simple ALV Tables
+  CHANGING
+    t_table        = lt_sales_data2
+).
+*        CATCH cx_salv_msg.    "
+
+
+lo_salv_table->display( ).
