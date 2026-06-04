@@ -1,0 +1,73 @@
+*&---------------------------------------------------------------------*
+*& Report  ZPRG_INNER_JOIN
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT ZPRG_INNER_JOIN.
+
+
+
+" Declared a parameter for user to give input and get the data.
+PARAMETERS: P_vbeln TYPE vbak-vbeln.
+
+
+
+TYPES : BEGIN OF ty_sales,
+       vbeln TYPE vbak-vbeln,
+       erdat TYPE vbak-erdat,
+       ernam TYPE vbak-ernam,
+       audat TYPE vbak-audat,
+       netwr TYPE vbak-netwr,
+       bstnk TYPE vbak-bstnk,
+       posnr TYPE vbap-posnr,
+       matnr TYPE vbap-matnr,
+       matkl TYPE vbap-matkl,
+       arktx TYPE vbap-arktx,
+       kwmeng TYPE vbap-kwmeng,
+  END OF ty_sales.
+
+
+  DATA : lt_sales TYPE STANDARD TABLE OF ty_sales.
+
+
+  SELECT
+    a~vbeln
+    a~erdat
+    a~ernam
+    a~audat
+    a~netwr
+    a~bstnk
+    b~posnr
+    b~matnr
+    b~matkl
+    b~arktx
+    b~kwmeng
+    FROM vbak AS a INNER JOIN vbap AS b ON  " INNER JOIN na rendu table la irukkura common field match aana mattum dha data varum.
+    a~vbeln = b~vbeln
+      INTO TABLE lt_sales
+    WHERE a~vbeln = p_vbeln.
+
+
+
+    cl_salv_table=>factory(
+*      EXPORTING
+*        list_display   = IF_SALV_C_BOOL_SAP=>FALSE    " ALV Displayed in List Mode
+*        r_container    =     " Abstract Container for GUI Controls
+*        container_name =
+      IMPORTING
+        r_salv_table   =  DATA(lo_salv_table)   " Basis Class Simple ALV Tables
+      CHANGING
+        t_table        = lt_sales
+    ).
+*      CATCH cx_salv_msg.    "
+
+  DATA(lo_columns) = lo_salv_table->get_columns( ).
+
+  lo_columns->set_optimize( abap_true ).
+
+
+
+    lo_salv_table->display( ).
