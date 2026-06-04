@@ -53,7 +53,7 @@ SELECT
   posnr
   netwr
   FROM vbap INTO TABLE lt_sales_data2
-  FOR ALL ENTRIES IN lt_sales_data1
+  FOR ALL ENTRIES IN lt_sales_data1 " FOR ALL ENTRIES IN (lt_sales_data1) mean it used to fetch the from the one database table based on the internal table value
   WHERE vbeln = lt_sales_data1-vbeln.
 ENDIF.
 
