@@ -77,9 +77,10 @@ ENDIF.
 " Using If conditon when the user give input in the parameter it will run the select single query block but that block code have work area we can't display that work area
 " so we append the work area value to the Internal table (lt_sales) now we can display the value (Note: only the user given the input in the parameter)
 " the user not given the value in the parameter it will run the else part.
-IF sy-subrc = 0.
 
-  APPEND ls_sales TO lt_sales.
+IF sy-subrc = 0. " (sy-subrc = 0) it mean's (IF block true) it will run the if block statement. 
+
+  APPEND ls_sales TO lt_sales.   " it mean's it append (move) the ls_sales record to lt_sales.
 
   ENDIF.
 
