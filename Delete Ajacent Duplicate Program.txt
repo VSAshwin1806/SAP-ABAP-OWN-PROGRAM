@@ -1,0 +1,87 @@
+*  &---------------------------------------------------------------------*
+*  & Report  ZPRG_DELETE_ADJACENT_DUP
+*  &
+*  &---------------------------------------------------------------------*
+*  &
+*  &
+*  &---------------------------------------------------------------------*
+
+  REPORT zprg_delete_adjacent_dup.
+
+
+  " This Program Mainly used for remove duplicate value from the final internal table.
+
+
+
+  " Declared a Pameter for user to give input and get the data
+  PARAMETERS: p_vbeln TYPE vbap-vbeln. "  vbap-vbeln ---> mean's it get the field from the table vbeln is the primary field.
+
+
+
+
+  " Declared a structure from the vbap table
+  TYPES : BEGIN OF ty_sal_data,
+           vbeln TYPE vbap-vbeln,
+           posnr TYPE vbap-posnr,
+           matnr TYPE vbap-matnr,
+           matkl TYPE vbap-matkl,
+           kwmeng TYPE vbap-kwmeng,
+           spart TYPE vbap-spart,
+           ntgew TYPE vbap-ntgew,
+           gewei TYPE vbap-gewei,
+           volum TYPE vbap-volum,
+           voleh TYPE vbap-voleh,
+    END OF ty_sal_data.
+
+
+
+
+  " Declared INTERNAL TABLE(lt_sal_data) to store multiple record.
+  " Declared WORK AREA (ls_sal_data) to hold a Single record.
+  DATA : lt_sal_data TYPE STANDARD TABLE OF ty_sal_data.
+*         ls_sal_data TYPE ty_sal_data.
+
+
+  " Using Select statement to select the field from the structure
+  SELECT
+    vbeln
+    posnr
+    matnr
+    matkl
+    kwmeng
+    spart
+    ntgew
+    gewei
+    volum
+    voleh
+    FROM vbap INTO TABLE lt_sal_data " To Store processed value or recorc in the INTERNAL TABLE (lt_sal_data).
+    WHERE vbeln = p_vbeln.
+
+  SORT lt_sal_data BY vbeln.  " Sort the internal Table value in asscending order
+
+
+  " Note: before to remove duplicate value we Must Sort the internal table becuse may be after removeing duplicate values it not work perfectly
+
+
+  DELETE ADJACENT DUPLICATES FROM lt_sal_data.
+
+  cl_salv_table=>factory(
+*      EXPORTING
+*        list_display   = IF_SALV_C_BOOL_SAP=>FALSE    " ALV Displayed in List Mode
+*        r_container    =     " Abstract Container for GUI Controls
+*        container_name =
+    IMPORTING
+      r_salv_table   =  DATA(lo_salv_table)   " Basis Class Simple ALV Tables
+    CHANGING
+      t_table        = lt_sal_data
+  ).
+*      CATCH cx_salv_msg.    "
+
+
+
+  " SET_OPTIMIZE automatically adjusts the width of all ALV columns based on the content displayed.
+  DATA(lo_columns) = lo_salv_table->get_columns( ).
+
+  lo_columns->set_optimize( abap_true ).
+
+  lo_salv_table->display( ).
