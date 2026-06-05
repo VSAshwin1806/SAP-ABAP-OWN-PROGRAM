@@ -1,0 +1,84 @@
+*&---------------------------------------------------------------------*
+*& Report  ZPRG_REPORT_EVENTS
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT zprg_report_events NO STANDARD PAGE HEADING  LINE-COUNT 27(3) LINE-SIZE 225.
+
+
+
+PARAMETERS : p_ebeln TYPE ekko-ebeln.
+
+
+INITIALIZATION. " It mean to set Default Value for the Parameter.
+  p_ebeln = '3000000004'.
+
+
+
+*AT SELECTION-SCREEN.   " It mean for validation to check the user given value or not and we can through a error or message.
+*  IF p_ebeln IS INITIAL.
+*
+*    MESSAGE : 'Enter Purchase Order Number' TYPE 'I'.
+*
+*  ENDIF.
+
+
+
+
+START-OF-SELECTION. " It mean the starting of logic of code we have to give in the this block
+
+  TYPES: BEGIN OF ty_purch,
+        ebeln TYPE ekko-ebeln,
+        bukrs TYPE ekko-bukrs,
+        bsart TYPE ekko-bsart,
+        aedat TYPE ekko-aedat,
+        ernam TYPE ekko-ernam,
+        ekorg TYPE ekko-ekorg,
+        waers TYPE ekko-waers,
+        END OF ty_purch.
+
+
+
+
+DATA : lt_purch TYPE TABLE OF ty_purch,
+       ls_purch TYPE ty_purch.
+
+  SELECT
+    ebeln
+    bukrs
+    bsart
+    aedat
+    ernam
+    ekorg
+    waers
+    FROM ekko INTO TABLE lt_purch UP TO 100 ROWS.
+*    WHERE ebeln = p_ebeln.
+
+
+
+END-OF-SELECTION. " It mean the final proccess of loop and display the ouput in this block.
+
+LOOP AT lt_purch INTO ls_purch.
+    WRITE : / ls_purch-ebeln,
+              ls_purch-bukrs,
+              ls_purch-bsart,
+              ls_purch-aedat,
+              ls_purch-ernam,
+              ls_purch-ekorg,
+              ls_purch-waers.
+    ENDLOOP.
+
+
+
+
+TOP-OF-PAGE. " Report top la heading display pannum.
+  WRITE : / 'Purchase Order Report'.
+  SKIP 1.
+  ULINE.
+
+END-OF-PAGE. " Page bottom la footer display pannum.
+  ULINE.
+  WRITE :  'End Of Report'.
