@@ -1,0 +1,204 @@
+REPORT Z_PRG_SALE_PURCH_REP.
+
+" It is use to Data Declaration this particular INCLUDE Z_PRG_SALES_PURCH_DD we can use multiple report because we create this as include program in (SE38) .
+INCLUDE Z_PRG_SALES_PURCH_DD. " When we click it will go to the block
+INCLUDE z_sale_data.
+
+INCLUDE z_purch_data.
+
+START-OF-SELECTION.
+
+PERFORM sale_data.
+
+PERFORM purch_data.
+
+"so we use subroutine in report we organise the code in separate blocks using perform when we click the perform or the include it's are same 
+" we create a perform in main program the include not appear 
+" we create a perform within include program the include will appear we can click the perform or include it will go to the code block.
+
+" Creating include in SE38 we can use that include any report only we create in SE38.
+
+
+
+
+_______________________________________________________________________________________________________________________________________________________________________
+*&---------------------------------------------------------------------*
+*&  Include           Z_PRG_SALES_PURCH_DD
+*&---------------------------------------------------------------------*
+
+
+TYPES : BEGIN OF ty_sales,
+          vbeln  TYPE vbak-vbeln,
+          erdat  TYPE vbak-erdat,
+          ernam  TYPE vbak-ernam,
+          auart  TYPE vbak-auart,
+          netwr  TYPE vbak-netwr,
+          waerk  TYPE vbak-waerk,
+          posnr  TYPE vbap-posnr,
+          matnr  TYPE vbap-matnr,
+          posar  TYPE vbap-posar,
+          kwmeng TYPE vbap-kwmeng,
+        END OF ty_sales.
+
+DATA : lt_sales TYPE TABLE OF ty_sales.
+
+
+TYPES : BEGIN OF ty_purch,
+          ebeln TYPE ekko-ebeln,
+          bukrs TYPE ekko-bukrs,
+          bstyp TYPE ekko-bstyp,
+          bsart TYPE ekko-bsart,
+          lifnr TYPE ekko-lifnr,
+          ebelp TYPE ekpo-ebelp,
+          aedat TYPE ekpo-aedat,
+          matnr TYPE ekpo-matnr,
+          matkl TYPE ekpo-matkl,
+        END OF ty_purch.
+
+
+DATA : lt_purch TYPE TABLE OF ty_purch.
+
+
+TABLES : vbak.
+
+SELECTION-SCREEN : BEGIN OF BLOCK a1 WITH FRAME TITLE TEXT-001 .
+  SELECTION-SCREEN SKIP .
+  SELECT-OPTIONS : s_vbeln FOR vbak-vbeln .
+  SELECTION-SCREEN SKIP .
+  PARAMETERS : sales RADIOBUTTON GROUP r1 .
+  SELECTION-SCREEN SKIP .
+  PARAMETERS : p_ebeln TYPE ekko-ebeln .
+  SELECTION-SCREEN SKIP .
+  PARAMETERS : purchase RADIOBUTTON GROUP r1 .
+  SELECTION-SCREEN SKIP .
+SELECTION-SCREEN : END OF BLOCK a1 .
+       
+                                          so these are the INCLUDE Z_PRG_SALES_PURCH_DD block code
+_________________________________________________________________________________________________________________________________________________________________________________
+
+_________________________________________________________________________________________________________________________________________________________________________________
+                                              INCLUDE z_sale_data. When we click this it will go to the block
+                                              Notes: when we create a perform but not the main program it will create a include block it will appear a new block we can code 
+
+
+*----------------------------------------------------------------------*
+***INCLUDE Z_SALE_DATA.
+*----------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  SALE_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM sale_data .
+
+  IF sales = 'X'.
+
+    SELECT
+         a~vbeln
+         a~erdat
+         a~ernam
+         a~auart
+         a~netwr
+         a~waerk
+         b~posnr
+         b~matnr
+         b~posar
+         b~kwmeng
+         FROM vbak AS a INNER JOIN vbap AS b ON
+          a~vbeln = b~vbeln
+         INTO TABLE lt_sales
+         WHERE a~vbeln IN s_vbeln.
+
+
+
+  cl_salv_table=>factory(
+    EXPORTING
+      list_display   = if_salv_c_bool_sap=>false    " ALV Displayed in List Mode
+*           r_container    =     " Abstract Container for GUI Controls
+*           container_name =
+    IMPORTING
+      r_salv_table   =  DATA(lo_salv_table)   " Basis Class Simple ALV Tables
+    CHANGING
+      t_table        = lt_sales
+  ).
+*         CATCH cx_salv_msg.    "
+
+
+
+  DATA(lo_columns) = lo_salv_table->get_columns( ).
+
+  lo_columns->set_optimize( abap_true ).
+
+
+  lo_salv_table->display( ).
+
+ENDIF.
+ENDFORM.                    " SALE_DATA
+
+                                                                  so these are the z_sale_data block code.
+_________________________________________________________________________________________________________________________________________________________________________________
+
+
+_________________________________________________________________________________________________________________________________________________________________________________
+
+
+
+*----------------------------------------------------------------------*
+***INCLUDE Z_PURCH_DATA.
+*----------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  PURCH_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM purch_data .
+IF purchase = 'X'.
+    SELECT
+
+    a~ebeln
+    a~bukrs
+    a~bstyp
+    a~bsart
+    a~lifnr
+    b~ebelp
+    b~aedat
+    b~matnr
+    b~matkl
+    FROM ekko AS a INNER JOIN ekpo AS b ON
+    a~ebeln = b~ebeln
+    INTO TABLE lt_purch
+    WHERE a~ebeln = p_ebeln.
+
+  cl_salv_table=>factory(
+    EXPORTING
+      list_display   = if_salv_c_bool_sap=>false    " ALV Displayed in List Mode
+*           r_container    =     " Abstract Container for GUI Controls
+*           container_name =
+    IMPORTING
+      r_salv_table   =  DATA(lo_salv_table)   " Basis Class Simple ALV Tables
+    CHANGING
+      t_table        = lt_purch
+  ).
+*         CATCH cx_salv_msg.    "
+
+
+
+  DATA(lo_columns) = lo_salv_table->get_columns( ).
+
+  lo_columns->set_optimize( abap_true ).
+
+
+  lo_salv_table->display( ).
+  ENDIF.
+
+ENDFORM.                    " PURCH_DATA
+
+
+                                                              so these are INCLUDE Z_PURCH_DATA block code.
+_________________________________________________________________________________________________________________________________________________________________________________
