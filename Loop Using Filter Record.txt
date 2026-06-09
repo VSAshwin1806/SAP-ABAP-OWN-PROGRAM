@@ -8,7 +8,11 @@
 
 REPORT Z_PRG_LOOP_FILTER_RECORD.
 
-
++----------------------------------+
+| Purchase Order Details           |
+|                                  | ----> It will show ouput screen
+| Purchase Order : [__________]    |
++----------------------------------+
 " This Block is used to group selcetion screen elements inside a framed box.
 SELECTION-SCREEN : BEGIN OF BLOCK b1 WITH FRAME TITLE text-001.
    PARAMETERS : P_vbeln TYPE vbak-vbeln.
