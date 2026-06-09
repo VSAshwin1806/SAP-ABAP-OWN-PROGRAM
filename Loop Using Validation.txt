@@ -1,0 +1,88 @@
+*&---------------------------------------------------------------------*
+*& Report  Z_PRG_LOOP_VALIDATION
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT Z_PRG_LOOP_VALIDATION.
+
+SELECTION-SCREEN: BEGIN OF BLOCK b1 WITH FRAME TITLE text-001.
+PARAMETERS: p_ebeln TYPE ekko-ebeln.
+SELECTION-SCREEN: END OF BLOCK b1.
+
+" Declared A structure from ekko & ekpo Table
+TYPES : BEGIN OF ty_purch,
+      ebeln TYPE ekko-ebeln,
+      bukrs TYPE ekko-bukrs,
+      lifnr TYPE ekko-lifnr,
+      bstyp TYPE ekko-bstyp,
+      bsart TYPE ekko-bsart,
+      ebelp TYPE ekpo-ebelp,
+      matnr TYPE ekpo-matnr,
+      netwr TYPE ekpo-netwr,
+      meins TYPE ekpo-meins,
+      menge TYPE ekpo-menge,
+      werks TYPE ekpo-werks,
+ END OF ty_purch.
+
+
+" Declared a (2) Internal Table & (1) Work Area.
+ DATA : lt_purch TYPE TABLE OF ty_purch,
+        lt_purch_final TYPE TABLE OF ty_purch,
+        ls_purch TYPE ty_purch.
+
+
+ SELECT
+   a~ebeln
+   a~bukrs
+   a~lifnr
+   a~bstyp
+   a~bsart
+   b~ebelp
+   b~matnr
+   b~netwr
+   b~meins
+   b~menge
+   b~werks
+   FROM ekko AS a INNER JOIN ekpo As b ON   " Using Inner Join For common record Form Ekko & Ekpo Table
+    a~ebeln = b~ebeln INTO TABLE lt_purch  " Insert to the Internal Table.
+   WHERE a~ebeln = p_ebeln. " Using where condition to Filter the purchase order no & given by the user
+
+
+" Using Loop for Identify the purchase order no have matnr details
+   LOOP AT lt_purch INTO ls_purch. " The Internal Table value's are goes to the work area one by one reading
+
+     IF ls_purch-matnr IS INITIAL. " It mean the work area single record particlur (matnr) have value or not it will check
+        CONTINUE. " when the matnr have no value it will skip the record it will goes to next reocrd.
+     ENDIF.
+
+     APPEND ls_purch TO lt_purch_final. " It will append the final proccessed value to the final Internal Table of (lt_purch_final).
+ENDLOOP.
+
+
+IF lt_purch_final IS INITIAL. " It mean when the user Enter a purchase order no but the po no does not have the value for (matnr)
+    MESSAGE : 'This Purchase order not have the value of MATNR' TYPE 'E'. " It will through a error message using (TYPE 'E') and (MESSAGE).
+ENDIF.
+
+
+cl_salv_table=>factory(
+*  EXPORTING
+*    list_display   = IF_SALV_C_BOOL_SAP=>FALSE    " ALV Displayed in List Mode
+*    r_container    =     " Abstract Container for GUI Controls
+*    container_name =
+  IMPORTING
+    r_salv_table   = DATA(lo_salv_table)    " Basis Class Simple ALV Tables
+  CHANGING
+    t_table        = lt_purch_final
+).
+*  CATCH cx_salv_msg.    "
+
+
+
+DATA(lo_columns) = lo_salv_table->get_columns( ).
+
+  lo_columns->set_optimize( abap_true ).
+
+lo_salv_table->display( ).
