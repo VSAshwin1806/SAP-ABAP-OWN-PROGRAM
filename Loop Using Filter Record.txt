@@ -1,0 +1,89 @@
+*&---------------------------------------------------------------------*
+*& Report  Z_PRG_LOOP_FILTER_RECORD
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT Z_PRG_LOOP_FILTER_RECORD.
+
+
+" This Block is used to group selcetion screen elements inside a framed box.
+SELECTION-SCREEN : BEGIN OF BLOCK b1 WITH FRAME TITLE text-001.
+   PARAMETERS : P_vbeln TYPE vbak-vbeln.
+SELECTION-SCREEN : END OF BLOCK b1.
+
+
+   TYPES: BEGIN OF ty_sales,
+        vbeln TYPE vbak-vbeln,
+        erdat TYPE vbak-erdat,
+        ernam TYPE vbak-ernam,
+        audat TYPE vbak-audat,
+        vbtyp TYPE vbak-vbtyp,
+        trvog TYPE vbak-trvog,
+        auart TYPE vbak-auart,
+        netwr TYPE vbak-netwr,
+        waerk TYPE vbak-waerk,
+     END OF ty_sales.
+
+
+
+
+     " Declared a INTERNAL TABLE & WORK AREA
+    DATA : lt_sales TYPE TABLE OF ty_sales,
+           lt_sales_final TYPE TABLE OF ty_sales,
+           ls_sales TYPE ty_sales.
+
+
+     SELECT
+       vbeln
+       erdat
+       ernam
+       audat
+       vbtyp
+       trvog
+       auart
+       netwr
+       waerk
+      FROM vbak INTO TABLE lt_sales
+         WHERE vbeln = p_vbeln.
+
+IF lt_sales IS INITIAL.
+  MESSAGE : 'Invaild Sale order Number ' TYPE 'E'.
+  ENDIF.
+
+
+       LOOP AT lt_sales INTO ls_sales WHERE ernam = 'CURA'.   " To Filtering the sale order belong's to the created by The 'CURA'
+
+      APPEND ls_sales TO lt_sales_final. " We Append the value Work Area (ls_sales) To (lt_sales_final) Final Internal Table.
+
+       ENDLOOP.
+
+
+       IF lt_sales_final IS INITIAL.   " It Mean we check when the use given sale order no but the sale order not belong's to the  created by The 'CURA'
+         MESSAGE : ' This Sale order does not belong to created by CURA' TYPE 'E'. " It will Through a Error Message (TYPE 'E' ,TYPE 'I') Information Message.
+         ENDIF.
+
+
+  " We Display the (lt_sales_final) Internal table
+       CL_SALV_TABLE=>factory(
+*         EXPORTING
+*           list_display   = IF_SALV_C_BOOL_SAP=>FALSE    " ALV Displayed in List Mode
+*           r_container    =     " Abstract Container for GUI Controls
+*           container_name =
+         IMPORTING
+           r_salv_table   =  DATA(lo_salv_table)   " Basis Class Simple ALV Tables
+         CHANGING
+           t_table        = lt_sales_final
+       ).
+*         CATCH cx_salv_msg.    "
+
+
+
+
+DATA(lo_columns) = lo_salv_table->get_columns( ).
+
+  lo_columns->set_optimize( abap_true ).  " It will automatically set the best width for each column so that all data is clearly visible without extra space or cutting.
+
+       lo_salv_table->display( ).
