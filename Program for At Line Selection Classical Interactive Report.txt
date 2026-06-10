@@ -1,0 +1,61 @@
+
+REPORT Z_PRG_SAMPLE.
+
+TABLES: vbak, vbap.
+
+TYPES : BEGIN OF ty_sales,
+        vbeln TYPE vbak-vbeln,
+        erdat TYPE vbak-erdat,
+        ernam TYPE vbak-ernam,
+        netwr TYPE vbak-netwr,
+  END OF ty_sales.
+
+DATA: lt_sales TYPE STANDARD TABLE OF ty_sales,
+      ls_sales TYPE ty_sales.
+
+DATA: lt_vbap TYPE TABLE OF vbap,
+      ls_vbap TYPE vbap.
+
+START-OF-SELECTION.
+
+  SELECT vbeln erdat ernam netwr
+    FROM vbak
+    INTO TABLE lt_sales
+    UP TO 20 ROWS.
+
+  LOOP AT lt_sales INTO ls_sales.
+
+    WRITE: / ls_sales-vbeln,
+             ls_sales-erdat,
+             ls_sales-ernam,
+             ls_sales-netwr.
+
+  ENDLOOP.
+
+*--------------------------------------------------*
+* FIRST LIST DISPLAY DONE
+*--------------------------------------------------*
+
+AT LINE-SELECTION.
+
+  READ TABLE lt_sales INTO ls_sales INDEX sy-lsind.
+
+  IF sy-subrc = 0.
+
+    SELECT *
+      FROM vbap
+      INTO TABLE lt_vbap
+      WHERE vbeln = ls_sales-vbeln.
+
+    WRITE: / 'ITEM DETAILS FOR SALES ORDER:', ls_sales-vbeln.
+
+    LOOP AT lt_vbap INTO ls_vbap.
+
+      WRITE: / ls_vbap-posnr,
+               ls_vbap-matnr,
+               ls_vbap-arktx,
+               ls_vbap-kwmeng.
+
+    ENDLOOP.
+
+  ENDIF.
