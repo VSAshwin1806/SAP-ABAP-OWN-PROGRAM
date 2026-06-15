@@ -1,0 +1,107 @@
+*&---------------------------------------------------------------------*
+*& Report  Z_PRG_LOCAL_CLASS
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT z_prg_local_class.
+
+TABLES: vbak.
+
+  SELECT-OPTIONS: s_vbeln FOR vbak-vbeln.
+
+     TYPES: BEGIN OF ty_sales,
+           vbeln TYPE vbak-vbeln,
+           ernam TYPE vbak-ernam,
+           auart TYPE vbak-auart,
+           netwr TYPE vbak-netwr,
+           waerk TYPE vbak-waerk,
+      END OF ty_sales.
+
+    DATA : lt_sales TYPE TABLE OF ty_sales,
+           ls_sales TYPE ty_sales.
+
+
+CLASS sales_data DEFINITION.  " It mean's we only declare a method event in this class we can't write the logic this
+
+  PUBLIC SECTION.
+
+*    CLASS-METHODS : proces_data , display. --> it's a static method we don't want to create a object for the class when declared like this.
+
+
+   METHODS : proces_data , display. " Declared two method to perform a specific task.
+
+
+ENDCLASS.
+
+
+CLASS sales_data IMPLEMENTATION. " In this Part we can write logic for the method's and events.
+
+
+  METHOD proces_data.
+IF s_vbeln IS NOT INITIAL.
+    SELECT
+      vbeln
+      ernam
+      auart
+      netwr
+      waerk
+    FROM vbak INTO TABLE lt_sales
+      WHERE vbeln = s_vbeln.
+MESSAGE : 'Your are Viewing the User Input Given sale order details' TYPE 'I'.
+
+ELSE.
+
+MESSAGE : 'Your are viewing all Sale order Details' TYPE 'I'.
+
+   SELECT
+      vbeln
+      ernam
+      auart
+      netwr
+      waerk
+    FROM vbak INTO TABLE lt_sales.
+     ENDIF.
+
+    ENDMETHOD.
+
+   METHOD display.
+
+
+  TRY.
+
+      cl_salv_table=>factory(
+        IMPORTING
+          r_salv_table = DATA(lo_salv_table)
+        CHANGING
+          t_table      = lt_sales
+      ).
+
+      DATA(lo_columns) = lo_salv_table->get_columns( ).
+      lo_columns->set_optimize( abap_true ).
+
+      lo_salv_table->display( ).
+
+    CATCH cx_salv_msg INTO DATA(lx_msg).
+      MESSAGE lx_msg->get_text( ) TYPE 'E'.
+
+  ENDTRY.
+
+     ENDMETHOD.
+
+ENDCLASS.
+
+
+START-OF-SELECTION.
+
+
+DATA(lo_sale) = NEW sales_data( ).  " Created a object for the (sales_data)class
+
+lo_sale->proces_data( ).  " we call the class method using (lo_sale) --> object name  (NEW) --> is the keyword for to create object for the class(sales_data).
+lo_sale->display( ).
+
+
+*sales_data=>proces_data( ).
+*sales_data=>display( ).
