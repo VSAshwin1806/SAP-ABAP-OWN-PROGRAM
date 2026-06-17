@@ -1,0 +1,92 @@
+*&---------------------------------------------------------------------*
+*& Report  Z_PRG_CLASS_VISIBILITY
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT Z_PRG_CLASS_VISIBILITY.
+
+TABLES: vbak.
+
+  SELECTION-SCREEN: BEGIN OF BLOCK b1 WITH FRAME TITLE TEXT-001.
+    SELECT-OPTIONS: s_vbeln FOR vbak-vbeln.
+  SELECTION-SCREEN: END OF BLOCK b1.
+
+
+CLASS sale_data DEFINITION.  " we only declare definition not write logic
+
+  PUBLIC SECTION.  " We can access this method in the outside of the class using object we have to create for the class and we can access
+     METHODS: get_data, display_data.
+
+     PRIVATE SECTION.  " we can't not access this data from the outside of the class because the data in the (PRIVATE SECTION) we can use only in this class
+                       " It is called Encapsulation because we hideing the unesscary data from the user.
+
+      TYPES: BEGIN OF ty_sales,
+           vbeln TYPE vbak-vbeln,
+           erdat TYPE vbak-erdat,
+           ernam TYPE vbak-ernam,
+           vbtyp TYPE vbak-vbtyp,
+           posnr TYPE vbap-posnr,
+           matnr TYPE vbap-matnr,
+           matkl TYPE vbap-matkl,
+           netwr TYPE vbap-netwr,
+           waerk TYPE vbap-waerk,
+        END OF ty_sales.
+
+        DATA: lt_sales TYPE TABLE OF ty_sales,
+              ls_sales TYPE ty_sales.
+
+  ENDCLASS.
+
+  CLASS sale_data IMPLEMENTATION. " In this part we can write logic for the method's
+  " This is a Instance class so we have to create object to access the method outside of the class.
+
+    METHOD get_data.
+    SELECT
+      a~vbeln
+      a~erdat
+      a~ernam
+      a~vbtyp
+      b~posnr
+      b~matnr
+      b~matkl
+      b~netwr
+      b~waerk
+      FROM vbak AS a INNER JOIN vbap AS b ON
+      a~vbeln = b~vbeln INTO TABLE lt_sales
+      WHERE a~vbeln IN s_vbeln.
+      ENDMETHOD.
+
+       METHOD display_data.
+
+         cl_salv_table=>factory(
+*           EXPORTING
+*             list_display   = IF_SALV_C_BOOL_SAP=>FALSE    " ALV Displayed in List Mode
+*             r_container    =     " Abstract Container for GUI Controls
+*             container_name =
+           IMPORTING
+             r_salv_table   = DATA(lo_salv_table)     " Basis Class Simple ALV Tables
+           CHANGING
+             t_table        = lt_sales
+         ).
+*           CATCH cx_salv_msg.    "
+
+         DATA(lo_columns) = lo_salv_table->get_columns( ).
+
+         lo_columns->set_optimize( abap_true ).
+
+         lo_salv_table->display( ).
+
+
+      ENDMETHOD.
+    ENDCLASS.
+
+
+    START-OF-SELECTION.
+
+    DATA(lo_sale_data) = NEW sale_data( ).  " Object created for the (sale_data) class (NEW)--> keyword for to create object
+
+    lo_sale_data->get_data( ).  " we using object to access the class method's from the outside of the class
+    lo_sale_data->display_data( ).
