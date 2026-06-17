@@ -1,0 +1,113 @@
+*&---------------------------------------------------------------------*
+*& Report  Z_PRG_STATIC_CLASS
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT Z_PRG_STATIC_CLASS.
+
+TABLES: ekko.
+
+SELECTION-SCREEN: BEGIN OF BLOCK b1 WITH FRAME TITLE TEXT-001.
+  SELECT-OPTIONS: s_ebeln FOR ekko-ebeln.
+SELECTION-SCREEN: END OF BLOCK b1.
+
+
+ TYPES: BEGIN OF ty_purch,
+       ebeln TYPE ekko-ebeln,
+       bukrs TYPE ekko-bukrs,
+       aedat TYPE ekko-aedat,
+       ernam TYPE ekko-ernam,
+       lifnr TYPE ekko-lifnr,
+       ebelp TYPE ekpo-ebelp,
+       matnr TYPE ekpo-matnr,
+       ematn TYPE ekpo-ematn,
+       matkl TYPE ekpo-matkl,
+       werks TYPE ekpo-werks,
+       menge TYPE ekpo-menge,
+       meins TYPE ekpo-meins,
+    END OF ty_purch.
+
+    DATA: lt_purch TYPE TABLE OF ty_purch,
+          lt_purch_final TYPE TABLE OF ty_purch,
+          ls_purch TYPE ty_purch.
+
+
+CLASS purchase_data DEFINITION.
+
+  PUBLIC SECTION.
+  CLASS-METHODS: get_data, display_data. "  (CLASS-METHODS)--> it's called static method so we can access without createing a object for the they called using (=>) keyword
+
+
+  ENDCLASS.
+
+  CLASS purchase_data IMPLEMENTATION.
+
+   METHOD get_data.
+
+     SELECT
+       a~ebeln
+       a~bukrs
+       a~aedat
+       a~ernam
+       a~lifnr
+       b~ebelp
+       b~matnr
+       b~ematn
+       b~matkl
+       b~werks
+       b~menge
+       b~meins
+       FROM ekko AS a INNER JOIN ekpo AS b ON a~ebeln = b~ebeln INTO TABLE lt_purch
+       WHERE a~ebeln IN s_ebeln.
+
+   LOOP AT lt_purch INTO ls_purch .
+
+     IF ls_purch-matnr IS INITIAL.
+      CONTINUE.
+     ENDIF.
+
+    APPEND ls_purch TO lt_purch_final.
+
+   ENDLOOP.
+
+   IF lt_purch_final IS INITIAL.
+
+   MESSAGE: 'This Purchase Order not have the value for the MATNR ' TYPE 'E'.
+
+   ENDIF.
+
+     ENDMETHOD.
+
+     METHOD display_data.
+
+  TRY.
+
+      cl_salv_table=>factory(
+        IMPORTING
+          r_salv_table = DATA(lo_salv_table)
+        CHANGING
+          t_table      = lt_purch_final
+      ).
+
+      DATA(lo_columns) = lo_salv_table->get_columns( ).
+      lo_columns->set_optimize( abap_true ).
+
+      lo_salv_table->display( ).
+
+    CATCH cx_salv_msg.
+      WRITE: / 'Error in ALV display'.
+
+  ENDTRY.
+
+       ENDMETHOD.
+
+
+    ENDCLASS.
+
+    START-OF-SELECTION.
+
+  purchase_data=>get_data( ). " In this statement we don't need to create a object for the class to access the class method's.
+  purchase_data=>display_data( ).
