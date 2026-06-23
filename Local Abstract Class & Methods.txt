@@ -1,0 +1,131 @@
+  *&---------------------------------------------------------------------*
+*& Report  Z_PRG_ABSTRACT_CL_METH
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT Z_PRG_ABSTRACT_CL_METH.
+
+TABLES: ekko.
+
+SELECTION-SCREEN: BEGIN OF BLOCK b1 WITH FRAME TITLE TEXT-001.
+  SELECT-OPTIONS: S_EBELN FOR ekko-ebeln.
+SELECTION-SCREEN: END OF BLOCK b1.
+
+
+TYPES: BEGIN OF ty_purch,
+      ebeln TYPE ekko-ebeln,
+      bukrs TYPE ekko-bukrs,
+      lifnr TYPE ekko-lifnr,
+      bstyp TYPE ekko-bstyp,
+      bsart TYPE ekko-bsart,
+      ebelp TYPE ekpo-ebelp,
+      matnr TYPE ekpo-matnr,
+      netwr TYPE ekpo-netwr,
+      meins TYPE ekpo-meins,
+      menge TYPE ekpo-menge,
+      werks TYPE ekpo-werks,
+END OF ty_purch.
+
+ DATA : lt_purch TYPE STANDARD TABLE OF ty_purch,
+        lt_purch_final TYPE STANDARD TABLE OF ty_purch,
+        ls_purch TYPE ty_purch.
+
+
+
+CLASS po_data DEFINITION ABSTRACT.  " (ABSTRACT CLASS OR METHOD)--> we can't created (OBJECT) for (ABSTRACT CLASS)
+
+ PUBLIC SECTION.
+    METHODS:
+      po_process ABSTRACT,
+      display ABSTRACT.
+
+  ENDCLASS.
+
+
+CLASS proccess_data DEFINITION INHERITING FROM po_data. " WE Have to (REDEFINITION) in the child class
+
+   PUBLIC SECTION.
+    METHODS:
+      po_process REDEFINITION,
+      display     REDEFINITION.
+
+
+  ENDCLASS.
+
+
+CLASS proccess_data IMPLEMENTATION . " We can IMPLEMENTAATION only in the child class when the (Class and Methods are Abstract)
+
+         METHOD po_process.
+
+          SELECT
+             a~ebeln
+             a~bukrs
+             a~lifnr
+             a~bstyp
+             a~bsart
+             b~ebelp
+             b~matnr
+             b~netwr
+             b~meins
+             b~menge
+             b~werks
+            FROM ekko AS a INNER JOIN ekpo As b ON
+            a~ebeln = b~ebeln INTO TABLE lt_purch
+             WHERE a~ebeln IN s_ebeln.
+
+            LOOP AT lt_purch INTO ls_purch.
+
+            IF ls_purch-matnr IS INITIAL.
+            CONTINUE.
+            ENDIF.
+
+            APPEND ls_purch TO lt_purch_final.
+
+            ENDLOOP.
+
+            IF lt_purch_final IS INITIAL.
+               MESSAGE : 'This Purchase order not have the value of MATNR' TYPE 'E'.
+               ENDIF.
+
+
+           ENDMETHOD.
+
+          METHOD display.
+
+              TRY.
+
+            cl_salv_table=>factory(
+
+              IMPORTING
+                r_salv_table   =   DATA(lo_salv_table)  " Basis Class Simple ALV Tables
+              CHANGING
+                t_table        = lt_purch_final
+            ).
+    CATCH cx_salv_msg INTO DATA(lx_msg).
+      MESSAGE lx_msg->get_text( ) TYPE 'E'.
+
+  ENDTRY.
+
+
+              DATA(lo_columns) = lo_salv_table->get_columns( ).
+
+             lo_columns->set_optimize( abap_true ).
+
+             lo_salv_table->display( ).
+
+            ENDMETHOD.
+
+         ENDCLASS.
+
+
+
+         START-OF-SELECTION.
+
+         DATA(lo_purch) = NEW proccess_data( ). " We have to create object for the child class it access the Abstract class
+
+         lo_purch->po_process( ).
+
+         lo_purch->display( ).
