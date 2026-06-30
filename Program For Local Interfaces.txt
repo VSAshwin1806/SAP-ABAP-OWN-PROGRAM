@@ -1,0 +1,118 @@
+*&---------------------------------------------------------------------*
+*& Report  Z_PRG_INTERFACE
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT z_prg_interface.
+
+TABLES: ekko.
+
+SELECTION-SCREEN: BEGIN OF BLOCK b1 WITH FRAME TITLE text-001.
+SELECT-OPTIONS: s_ebeln FOR ekko-ebeln.
+SELECTION-SCREEN: END OF BLOCK b1.
+
+
+TYPES: BEGIN OF ty_purch,
+      ebeln TYPE ekko-ebeln,
+      bukrs TYPE ekko-bukrs,
+      lifnr TYPE ekko-lifnr,
+      bstyp TYPE ekko-bstyp,
+      bsart TYPE ekko-bsart,
+      ebelp TYPE ekpo-ebelp,
+      matnr TYPE ekpo-matnr,
+      netwr TYPE ekpo-netwr,
+      meins TYPE ekpo-meins,
+      menge TYPE ekpo-menge,
+      werks TYPE ekpo-werks,
+   END OF ty_purch.
+
+   DATA : lt_purch TYPE TABLE OF ty_purch,
+          lt_purch_final TYPE TABLE OF ty_purch,
+          ls_purch TYPE ty_purch.
+
+   INTERFACE IntFac.  " It is a Interface we can only Define the  methods DEFINITION only we can IMPLEMENTATION in the other class
+     METHODS: fatch_data , display.
+   ENDINTERFACE.
+
+   CLASS process DEFINITION.
+     PUBLIC SECTION.
+     INTERFACES  IntFac.
+   ENDCLASS.
+
+
+   CLASS process IMPLEMENTATION.
+
+     METHOD IntFac~fatch_data.
+
+      SELECT
+       a~ebeln
+       a~bukrs
+       a~lifnr
+       a~bstyp
+       a~bsart
+       b~ebelp
+       b~matnr
+       b~netwr
+       b~meins
+       b~menge
+       b~werks
+         FROM ekko AS a INNER JOIN ekpo AS b ON a~ebeln = b~ebeln INTO TABLE lt_purch
+         WHERE a~ebeln IN s_ebeln.
+
+   LOOP AT lt_purch INTO ls_purch .
+
+     IF ls_purch-matnr IS INITIAL.
+      CONTINUE.
+     ENDIF.
+
+    APPEND ls_purch TO lt_purch_final.
+
+   ENDLOOP.
+
+   IF lt_purch_final IS INITIAL.
+
+   MESSAGE: 'This Purchase Order not have the value for the MATNR ' TYPE 'E'.
+
+   ENDIF.
+
+     ENDMETHOD.
+
+  METHOD IntFac~display.
+
+      TRY.
+cl_salv_table=>factory(
+*  EXPORTING
+*    list_display   = IF_SALV_C_BOOL_SAP=>FALSE    " ALV Displayed in List Mode
+*    r_container    =     " Abstract Container for GUI Controls
+*    container_name =
+  IMPORTING
+    r_salv_table   = DATA(lo_salv_table)    " Basis Class Simple ALV Tables
+  CHANGING
+    t_table        = lt_purch_final
+).
+*  CATCH cx_salv_msg.    "
+        DATA(lo_columns) = lo_salv_table->get_columns( ).
+        lo_columns->set_optimize( abap_true ).
+
+        lo_salv_table->display( ).
+
+      CATCH cx_salv_msg.
+        WRITE: / 'Error in ALV display'.
+
+    ENDTRY.
+
+
+  ENDMETHOD.
+
+   ENDCLASS.
+
+   START-OF-SELECTION.
+
+   DATA(lo_access) = NEW process( ).
+
+   lo_access->intfac~fatch_data( ).
+
+   lo_access->intfac~display( ).
