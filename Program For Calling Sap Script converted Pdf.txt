@@ -1,0 +1,265 @@
+*&---------------------------------------------------------------------*
+*& Report  Z_CALL_SAP_SCRIPT_ASH_DIR_OUT
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  Z_CALL_SAP_SCRIPT_ASH_DIR_OUT.
+
+PARAMETER: P_vbeln TYPE vbap-vbeln.
+
+
+TYPES: BEGIN OF ty_data,
+    vbeln TYPE vbap-vbeln,
+    erdat TYPE vbap-erdat,
+    matnr TYPE vbap-matnr,
+    netwr TYPE vbap-netwr,
+    waerk TYPE vbap-waerk,
+    posnr TYPE vbap-posnr,
+  END OF ty_data.
+
+  DATA: lt_data TYPE TABLE OF ty_data,
+        ls_data TYPE ty_data.
+
+
+DATA: ls_options TYPE ITCPO. " Work Area For it have the field's of (Output Device 'LP01' and Print Preview)
+
+DATA: lt_otf TYPE TABLE OF ITCOO.
+DATA: lt_pdf TYPE TABLE OF TLINE.
+
+
+  SELECT
+    vbeln
+    erdat
+    matnr
+    netwr
+    waerk
+    posnr
+    FROM vbap INTO TABLE lt_data
+    WHERE vbeln = P_vbeln.
+
+    READ TABLE lt_data INTO ls_data INDEX 1.
+
+    ls_options-TDDEST = 'LP01'. " Default we set the Ouput device for user convince
+    ls_options-TDPREVIEW = 'X'.  " Print Preview Button we Default set becauase the user or the client convince they don't need to click so much of button's
+    ls_options-TDGETOTF = 'X'.
+
+    CALL FUNCTION 'OPEN_FORM'
+     EXPORTING
+*       APPLICATION                       = 'TX'
+*       ARCHIVE_INDEX                     =
+*       ARCHIVE_PARAMS                    =
+*       DEVICE                            = 'PRINTER'
+       DIALOG                            = ' ' " Blank Space mean's the selecting the output device and the print preview can't show but the Capital 'X' mean's it will show
+       FORM                              = 'Z_SAP_SCRIPT_ASH'
+*       LANGUAGE                          = SY-LANGU
+       OPTIONS                           = ls_options " we given the work area
+*       MAIL_SENDER                       =
+*       MAIL_RECIPIENT                    =
+*       MAIL_APPL_OBJECT                  =
+*       RAW_DATA_INTERFACE                = '*'
+*       SPONUMIV                          =
+*     IMPORTING
+*       LANGUAGE                          =
+*       NEW_ARCHIVE_PARAMS                =
+*       RESULT                            =
+     EXCEPTIONS
+       CANCELED                          = 1
+       DEVICE                            = 2
+       FORM                              = 3
+       OPTIONS                           = 4
+       UNCLOSED                          = 5
+       MAIL_OPTIONS                      = 6
+       ARCHIVE_ERROR                     = 7
+       INVALID_FAX_NUMBER                = 8
+       MORE_PARAMS_NEEDED_IN_BATCH       = 9
+       SPOOL_ERROR                       = 10
+       CODEPAGE                          = 11
+       OTHERS                            = 12
+              .
+    IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+    ENDIF.
+
+    CALL FUNCTION 'WRITE_FORM'
+     EXPORTING
+*       ELEMENT                        = ' '
+*       FUNCTION                       = 'SET'
+*       TYPE                           = 'BODY'
+       WINDOW                         = 'ORDIN'
+*     IMPORTING
+*       PENDING_LINES                  =
+     EXCEPTIONS
+       ELEMENT                        = 1
+       FUNCTION                       = 2
+       TYPE                           = 3
+       UNOPENED                       = 4
+       UNSTARTED                      = 5
+       WINDOW                         = 6
+       BAD_PAGEFORMAT_FOR_PRINT       = 7
+       SPOOL_ERROR                    = 8
+       CODEPAGE                       = 9
+       OTHERS                         = 10
+              .
+    IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+    ENDIF.
+
+
+    CALL FUNCTION 'WRITE_FORM'
+     EXPORTING
+*       ELEMENT                        = ' '
+*       FUNCTION                       = 'SET'
+*       TYPE                           = 'BODY'
+       WINDOW                         = 'HDRVAL'
+*     IMPORTING
+*       PENDING_LINES                  =
+     EXCEPTIONS
+       ELEMENT                        = 1
+       FUNCTION                       = 2
+       TYPE                           = 3
+       UNOPENED                       = 4
+       UNSTARTED                      = 5
+       WINDOW                         = 6
+       BAD_PAGEFORMAT_FOR_PRINT       = 7
+       SPOOL_ERROR                    = 8
+       CODEPAGE                       = 9
+       OTHERS                         = 10
+              .
+    IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+    ENDIF.
+
+    CALL FUNCTION 'WRITE_FORM'
+     EXPORTING
+*       ELEMENT                        = ' '
+*       FUNCTION                       = 'SET'
+*       TYPE                           = 'BODY'
+       WINDOW                         = 'MAIN'
+*     IMPORTING
+*       PENDING_LINES                  =
+     EXCEPTIONS
+       ELEMENT                        = 1
+       FUNCTION                       = 2
+       TYPE                           = 3
+       UNOPENED                       = 4
+       UNSTARTED                      = 5
+       WINDOW                         = 6
+       BAD_PAGEFORMAT_FOR_PRINT       = 7
+       SPOOL_ERROR                    = 8
+       CODEPAGE                       = 9
+       OTHERS                         = 10
+              .
+    IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+    ENDIF.
+
+
+CALL FUNCTION 'CLOSE_FORM'
+* IMPORTING
+*   RESULT                         =
+*   RDI_RESULT                     =
+ TABLES
+   OTFDATA                        = lt_otf
+ EXCEPTIONS
+   UNOPENED                       = 1
+   BAD_PAGEFORMAT_FOR_PRINT       = 2
+   SEND_ERROR                     = 3
+   SPOOL_ERROR                    = 4
+   CODEPAGE                       = 5
+   OTHERS                         = 6
+          .
+IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+ENDIF.
+
+CALL FUNCTION 'CONVERT_OTF'
+ EXPORTING
+   FORMAT                      = 'PDF'
+*   MAX_LINEWIDTH               = 132
+*   ARCHIVE_INDEX               = ' '
+*   COPYNUMBER                  = 0
+*   ASCII_BIDI_VIS2LOG          = ' '
+*   PDF_DELETE_OTFTAB           = ' '
+*   PDF_USERNAME                = ' '
+*   PDF_PREVIEW                 = ' '
+*   USE_CASCADING               = ' '
+* IMPORTING
+*   BIN_FILESIZE                =
+*   BIN_FILE                    =
+  TABLES
+    OTF                         = lt_otf
+    LINES                       = lt_pdf
+ EXCEPTIONS
+   ERR_MAX_LINEWIDTH           = 1
+   ERR_FORMAT                  = 2
+   ERR_CONV_NOT_POSSIBLE       = 3
+   ERR_BAD_OTF                 = 4
+   OTHERS                      = 5
+          .
+IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+ENDIF.
+
+
+CALL FUNCTION 'GUI_DOWNLOAD'
+  EXPORTING
+*   BIN_FILESIZE                    =
+    FILENAME                        = 'C:\Users\gashw\OneDrive\Desktop\order.PDF'
+   FILETYPE                        = 'BIN'
+*   APPEND                          = ' '
+*   WRITE_FIELD_SEPARATOR           = ' '
+*   HEADER                          = '00'
+*   TRUNC_TRAILING_BLANKS           = ' '
+*   WRITE_LF                        = 'X'
+*   COL_SELECT                      = ' '
+*   COL_SELECT_MASK                 = ' '
+*   DAT_MODE                        = ' '
+*   CONFIRM_OVERWRITE               = ' '
+*   NO_AUTH_CHECK                   = ' '
+*   CODEPAGE                        = ' '
+*   IGNORE_CERR                     = ABAP_TRUE
+*   REPLACEMENT                     = '#'
+*   WRITE_BOM                       = ' '
+*   TRUNC_TRAILING_BLANKS_EOL       = 'X'
+*   WK1_N_FORMAT                    = ' '
+*   WK1_N_SIZE                      = ' '
+*   WK1_T_FORMAT                    = ' '
+*   WK1_T_SIZE                      = ' '
+*   WRITE_LF_AFTER_LAST_LINE        = ABAP_TRUE
+*   SHOW_TRANSFER_STATUS            = ABAP_TRUE
+*   VIRUS_SCAN_PROFILE              = '/SCET/GUI_DOWNLOAD'
+* IMPORTING
+*   FILELENGTH                      =
+  TABLES
+    DATA_TAB                        = lt_pdf
+*   FIELDNAMES                      =
+ EXCEPTIONS
+   FILE_WRITE_ERROR                = 1
+   NO_BATCH                        = 2
+   GUI_REFUSE_FILETRANSFER         = 3
+   INVALID_TYPE                    = 4
+   NO_AUTHORITY                    = 5
+   UNKNOWN_ERROR                   = 6
+   HEADER_NOT_ALLOWED              = 7
+   SEPARATOR_NOT_ALLOWED           = 8
+   FILESIZE_NOT_ALLOWED            = 9
+   HEADER_TOO_LONG                 = 10
+   DP_ERROR_CREATE                 = 11
+   DP_ERROR_SEND                   = 12
+   DP_ERROR_WRITE                  = 13
+   UNKNOWN_DP_ERROR                = 14
+   ACCESS_DENIED                   = 15
+   DP_OUT_OF_MEMORY                = 16
+   DISK_FULL                       = 17
+   DP_TIMEOUT                      = 18
+   FILE_NOT_FOUND                  = 19
+   DATAPROVIDER_EXCEPTION          = 20
+   CONTROL_FLUSH_ERROR             = 21
+   OTHERS                          = 22
+          .
+IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+ENDIF.
