@@ -1,0 +1,79 @@
+*&---------------------------------------------------------------------*
+*& Report Z_PRG_CALLING_ADOBE_FORM
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT Z_PRG_CALLING_ADOBE_FORM.
+
+
+
+
+
+DATA: ls_parameter TYPE SFPOUTPUTPARAMS.
+
+DATA: lv_funcname TYPE FUNCNAME.
+
+DATA: lv_result TYPE SFPJOBOUTPUT.
+
+PARAMETERS: p_vbeln TYPE vbeln_va.
+
+INITIALIZATION.
+ls_parameter-NODIALOG = 'X'.
+ls_parameter-dest = 'LP01'.
+ls_parameter-PREVIEW = 'X'.
+
+
+START-OF-SELECTION.
+CALL FUNCTION 'FP_JOB_OPEN'
+  CHANGING
+    ie_outputparams       = ls_parameter
+ EXCEPTIONS
+   CANCEL                = 1
+   USAGE_ERROR           = 2
+   SYSTEM_ERROR          = 3
+   INTERNAL_ERROR        = 4
+   OTHERS                = 5
+          .
+IF sy-subrc <> 0.
+* Implement suitable error handling here
+ENDIF.
+
+CALL FUNCTION 'FP_FUNCTION_MODULE_NAME'
+  EXPORTING
+    i_name                     = 'Z_ADOBE_SALES_ORD'
+ IMPORTING
+   E_FUNCNAME                 = lv_funcname
+*   E_INTERFACE_TYPE           =
+*   EV_FUNCNAME_INBOUND        =
+          .
+
+
+
+CALL FUNCTION lv_funcname
+  EXPORTING
+*   /1BCDWB/DOCPARAMS        =
+    p_vbeln                  = p_vbeln
+* IMPORTING
+*   /1BCDWB/FORMOUTPUT       =
+ EXCEPTIONS
+   USAGE_ERROR              = 1
+   SYSTEM_ERROR             = 2
+   INTERNAL_ERROR           = 3
+   OTHERS                   = 4
+          .
+IF sy-subrc <> 0.
+* Implement suitable error handling here
+ENDIF.
+
+CALL FUNCTION 'FP_JOB_CLOSE'
+ IMPORTING
+   E_RESULT             = lv_result
+ EXCEPTIONS
+   USAGE_ERROR          = 1
+   SYSTEM_ERROR         = 2
+   INTERNAL_ERROR       = 3
+   OTHERS               = 4
+          .
+IF sy-subrc <> 0.
+* Implement suitable error handling here
+ENDIF.
