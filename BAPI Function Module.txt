@@ -1,0 +1,31 @@
+FUNCTION zbapi_employee_creation.
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     VALUE(PEMP) TYPE  ZBAPI_EMPLO
+*"  EXPORTING
+*"     VALUE(RETURN) TYPE  BAPIRET2
+*"----------------------------------------------------------------------
+
+  DATA ls_emp TYPE zemployee_mas .
+  ls_emp-employee_id = pemp-employee_id .
+  ls_emp-employee_name = pemp-employee_name .
+  INSERT zemployee_mas FROM  ls_emp .
+  IF sy-subrc = 0.
+    Return-type = 'S'.
+    return-id = 'ZMSG_BAPI'.
+    return-number = '000'.
+    RETURN-message = 'SUCCESSFULLY INSERT TO ZEMPLOYEE_MAS  TABLE'.
+    return-message_v1 = 'pemp-employee_id'.
+
+  ELSE .
+    Return-type = 'E'.
+    return-id = 'ZMSG_BAPI'.
+    return-number = '001'.
+    RETURN-message = 'FAILED TO  INSERT  ZEMPLOYEE_MAS  TABLE'.
+    return-message_v1 = 'pemp-employee_id'.
+  ENDIF.
+
+
+
+ENDFUNCTION.
