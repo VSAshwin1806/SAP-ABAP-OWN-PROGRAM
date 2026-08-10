@@ -1,5 +1,4 @@
 # SAP-ABAP-OWN-PROGRAM
 My own SAP ABAP Programs 
 
-it have simple and advance logical of abap programing 
-and it have comment's also for better understanding the code.
+Core ABAP programming with basic logic and comments for better understanding of the code.
