@@ -1,0 +1,12 @@
+@AbapCatalog.sqlViewName: 'ZCDS_VIEW_DD_INP'
+@EndUserText.label: 'Cds Views With Input Parameter'
+define view ZCDS_VIEW_DD_WITH_IN 
+with parameters p_salesord: vkorg,
+                p_date: abap.dats
+as select from vbak
+{
+   key vbeln as sale_order_no,
+       erdat as created_on,
+       vkorg as sale_org
+} where vkorg = :p_salesord 
+    and erdat <= :p_date
