@@ -1,0 +1,91 @@
+*&---------------------------------------------------------------------*
+*& Report ZCDS_VIEW_CALL
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZCDS_VIEW_CALL.
+
+
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE text-001.
+
+  PARAMETERS : view1 RADIOBUTTON GROUP r1 .
+  PARAMETERS : view2 RADIOBUTTON GROUP r1 .
+
+SELECTION-SCREEN END OF BLOCK b1.
+
+
+IF view1 = 'X'.
+
+SELECT * FROM ZCDS_VIEW_DD INTO TABLE @data(lt_cds_view).
+
+
+
+
+  TRY.
+  CALL METHOD cl_salv_table=>factory
+*    EXPORTING
+*      list_display   = IF_SALV_C_BOOL_SAP=>FALSE
+*      r_container    =
+*      container_name =
+    IMPORTING
+      r_salv_table   = DATA(lo_salv_table)
+    CHANGING
+      t_table        = lt_cds_view
+      .
+    CATCH cx_salv_msg.
+  ENDTRY.
+
+
+DATA(lo_columns) = lo_salv_table->get_columns( ).
+
+  lo_columns->set_optimize( abap_true ).
+
+
+  lo_salv_table->display( ).
+
+  ELSEIF view2 = 'X'.
+
+    SELECT * FROM ZCDS_VIEW_DD_WITH_IN( p_salesord = '71RP', p_date = '20300101' ) INTO TABLE @DATA(lt_cds_view1).
+
+
+*    cl_salv_gui_table_ida=>create_for_cds_view(
+*    iv_cds_view_name = 'ZCDS_VIEW_DD_WITH_IN' )->fullscreen( )->display( ).
+
+
+
+ TRY.
+  CALL METHOD cl_salv_table=>factory
+*    EXPORTING
+*      list_display   = IF_SALV_C_BOOL_SAP=>FALSE
+*      r_container    =
+*      container_name =
+    IMPORTING
+      r_salv_table   = DATA(lo_salv_table1)
+    CHANGING
+      t_table        = lt_cds_view1
+      .
+    CATCH cx_salv_msg.
+  ENDTRY.
+
+
+DATA(lo_columns1) = lo_salv_table1->get_columns( ).
+
+  lo_columns1->set_optimize( abap_true ).
+
+
+  lo_salv_table1->display( ).
+
+*DATA(lo_alv) = cl_salv_gui_table_ida=>create_for_cds_view(
+*    iv_cds_view_name = 'ZCDS_VIEW_DD_WITH_IN' ).
+*
+*  lo_alv->set_view_parameters(
+*    it_parameters = VALUE #(
+*      ( name = 'P_SALESORD' value = '71RP' )
+*      ( name = 'P_DATE'     value = '20300101' )
+*    )
+*  ).
+*
+*  lo_alv->fullscreen( )->display( ).
+
+
+  ENDIF.
