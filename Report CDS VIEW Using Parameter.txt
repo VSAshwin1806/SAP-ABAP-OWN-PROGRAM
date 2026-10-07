@@ -1,0 +1,45 @@
+*&---------------------------------------------------------------------*
+*& Report ZCDS_VIEW_CALL
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZCDS_VIEW_CALL_DIR_IP.
+
+
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE text-001.
+
+  PARAMETERS : p_sale TYPE vbak-vkorg OBLIGATORY.
+
+SELECTION-SCREEN END OF BLOCK b1.
+
+
+    SELECT * FROM ZCDS_VIEW_DD_WITH_IN( p_salesord = @p_sale, p_date = '20300101' ) INTO TABLE @DATA(lt_cds_view1).
+
+      IF p_sale IS NOT INITIAL.
+
+          MESSAGE 'There is no Data' TYPE 'E'.
+
+      ENDIF.
+
+
+ TRY.
+  CALL METHOD cl_salv_table=>factory
+*    EXPORTING
+*      list_display   = IF_SALV_C_BOOL_SAP=>FALSE
+*      r_container    =
+*      container_name =
+    IMPORTING
+      r_salv_table   = DATA(lo_salv_table)
+    CHANGING
+      t_table        = lt_cds_view1
+      .
+    CATCH cx_salv_msg.
+  ENDTRY.
+
+
+  DATA(lo_columns) = lo_salv_table->get_columns( ).
+
+  lo_columns->set_optimize( abap_true ).
+
+
+  lo_salv_table->display( ).
