@@ -1,0 +1,8 @@
+@AbapCatalog.sqlViewName: 'ZCDS_VIEW_DD1'
+@EndUserText.label: 'Cds Views Data Definition'
+define view ZCDS_VIEW_DD as select from mara
+{
+ key matnr,
+ mtart,
+ ersda 
+} where mtart = 'FERT' or mtart = 'ZALB'
